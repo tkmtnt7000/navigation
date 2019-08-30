@@ -350,7 +350,7 @@ namespace base_local_planner {
     v_theta_samp = sign(v_theta_samp) * std::min(std::max(fabs(v_theta_samp), min_acc_vel), max_acc_vel);
 
     //we also want to make sure to send a velocity that allows us to stop when we reach the goal given our acceleration limits
-    double max_speed_to_stop = sqrt(2 * acc_lim_theta_ * fabs(ang_diff)); 
+    double max_speed_to_stop = sqrt(2 * acc_lim_theta_ * fabs(ang_diff));
 
     v_theta_samp = sign(v_theta_samp) * std::min(max_speed_to_stop, fabs(v_theta_samp));
 
@@ -384,7 +384,7 @@ namespace base_local_planner {
     //reset the global plan
     global_plan_.clear();
     global_plan_ = orig_global_plan;
-    
+
     //when we get a new plan, we also want to clear any latch we may have on goal tolerances
     xy_tolerance_latch_ = false;
     //reset the at goal flag
@@ -403,6 +403,12 @@ namespace base_local_planner {
     if (!costmap_ros_->getRobotPose(global_pose)) {
       return false;
     }
+
+    // raw value of the map at current robot position
+    unsigned int mx, my;
+    unsigned char raw_value;
+    costmap_->worldToMap(global_pose.getOrigin().x(), global_pose.getOrigin().y(), mx, my);
+    ROS_INFO("raw_value[%u][%u]: %hhu", mx, my, costmap_->getRaw(mx, my));
 
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
     //get the global plan in our frame
@@ -612,6 +618,6 @@ namespace base_local_planner {
       return false;
     }
     //return flag set in controller
-    return reached_goal_; 
+    return reached_goal_;
   }
 };
