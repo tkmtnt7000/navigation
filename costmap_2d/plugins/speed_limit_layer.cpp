@@ -36,7 +36,9 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <costmap_2d/speed_limit_layer.h>
 #include <costmap_2d/costmap_math.h>
 #include <pluginlib/class_list_macros.h>
@@ -175,6 +177,7 @@ void SpeedLimitLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map
               new_map->info.origin.position.x, new_map->info.origin.position.y);
   }
 
+
   unsigned int index = 0;
 
   // initialize the costmap with static data
@@ -293,12 +296,15 @@ void SpeedLimitLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
     unsigned int mx, my;
     double wx, wy;
     // Might even be in a different frame
-    tf::StampedTransform transform;
+    geometry_msgs::TransformStamped transform;
+    //tf2::Stamped<tf2::Transform> transform;
+    //tf2::StampedTransform transform;
     try
     {
-      tf_->lookupTransform(map_frame_, global_frame_, ros::Time(0), transform);
+      tf_->lookupTransform(map_frame_, global_frame_, ros::Time(0));
+      //tf_->lookupTransform(map_frame_, global_frame_, ros::Time(0), ros::Duration(10), transform);
     }
-    catch (tf::TransformException ex)
+    catch (tf2::TransformException ex)
     {
       ROS_ERROR("%s", ex.what());
       return;
@@ -314,10 +320,15 @@ void SpeedLimitLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
         // Convert master_grid coordinates (i,j) into global_frame_(wx,wy) coordinates
         layered_costmap_->getCostmap()->mapToWorld(i, j, wx, wy);
         // Transform from global_frame_ to map_frame_
-        tf::Point p(wx, wy, 0);
-        p = transform(p);
+        // geometry_msgs::Point p(wx, wy, (double)0);
+        // geometry_msgs::Point p;
+        // geometry_msgs::Transform p;
+        // p.translation.x = wx;
+        // p.translation.y = wy;
+        // p.translation.z = 0;
+        // p = transform(p);
         // Set master_grid with cell from map
-        if (worldToMap(p.x(), p.y(), mx, my))
+        if (worldToMap(wx, wy, mx, my))
         {
           master_grid.setRaw(i, j, getRaw(mx, my));
           // master_grid.setRaw(i, j, raw_map_[index]); // OK
